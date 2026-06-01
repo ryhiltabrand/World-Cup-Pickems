@@ -1,0 +1,24 @@
+https://www.api-football.com/news/post/fifa-world-cup-2026-using-api-sports-widgets
+
+Where to get the match data
+You don't need to scrape anything. The cleanest free option for a self-hosted hobby project is openfootball/worldcup.json — free, public-domain football data with no API key required, including the Canada/USA/Mexico 2026 schedule as JSON. You seed your database from it once and you're done for fixtures. GitHub
+
+For live results during the tournament you have two free-tier routes. API-Football covers every 2026 match — schedule, standings, and bracket — available now via league=1 and season=2026, with live data activating as matches play. Or football-data.org includes World Cup fixtures on its free tier, though with more aggressive pagination and without venue metadata or Round-of-32 placeholders. Paid options exist (TheStatsAPI, Sportmonks, Statorium) but you don't need them for a friends-and-family pickems site. API-FootballTheStatsAPI
+
+A nice fallback worth building anyway: an admin screen where you manually enter final scores. It makes the app fully self-contained if an API hiccups, and during a 104-match tournament that's reassuring.
+Data model
+
+The 2026 format shapes a couple of design decisions. There are 12 groups of four named A through L, with three points for a win and one for a draw, and 32 teams reach the knockouts — the top two from each group plus the eight best third-placed teams — then it's Round of 32, Round of 16, quarter-finals, semi-finals, and final. The practical consequence: your stage field needs a round_of_32 value that older tournament schemas lack, and knockout matches won't have known teams until the group stage resolves, so team columns on a match must be nullable with a text placeholder ("Winner Group A", "3rd best B/E/F").
+
+A phased build plan
+
+1. Backend skeleton + DB. Get Go talking to Postgres, run your migrations, seed teams and matches from openfootball. No auth yet — just a GET /api/matches that returns the schedule. This teaches you the language's HTTP and DB story end to end.
+2. Auth. Register, login, logout with hashed passwords and session cookies. This is the meatiest "learn the language" piece — error handling, middleware, request context.
+3. Picks. Authenticated users submit and edit predictions, with server-side kickoff locking and the unique constraint doing the heavy lifting.
+4. Scoring + leaderboard. Write the pure scoring function, the recompute-on-finish step, and a GET /api/leagues/:id/standings query that sums points per member.
+5. Leagues. Create a league, generate a join code, join via code, scope the leaderboard to members.
+6.Angular frontend. Now wire up the UI against an API you trust: fixtures list, pick entry forms, a leaderboard, league management, and an auth guard on the routes.
+7. Results sync + admin. The worker that polls the football API and the manual-entry admin fallback.
+8. Dockerize and self-host. Compose file with API, Postgres, and Caddy; point a domain at your box.
+
+Create a new monorepo project called worldcup-pickems with two directories: backend (Go module named github.com/ryhiltabrand/worldcup-pickems/backend) and frontend. In the backend, initialize a Go module, create a basic main.go that starts an HTTP server on port 8080 with a health check endpoint at GET /api/health that returns {"status":"ok"}. Also create a docker-compose.yml at the root with services for postgres (postgres:16, with a worldcup_pickems database, user and password from .env), and a stub for the api service. Create a .env.example file with the required variables.
