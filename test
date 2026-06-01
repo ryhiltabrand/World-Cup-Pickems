@@ -1,5 +1,10 @@
 https://www.api-football.com/news/post/fifa-world-cup-2026-using-api-sports-widgets
 
+NODE -> npm isntall angular -g @angular/cli
+GO (1.22+)
+Docker Desktop or docker on linux
+Postgres inside of docker
+
 Where to get the match data
 You don't need to scrape anything. The cleanest free option for a self-hosted hobby project is openfootball/worldcup.json — free, public-domain football data with no API key required, including the Canada/USA/Mexico 2026 schedule as JSON. You seed your database from it once and you're done for fixtures. GitHub
 
